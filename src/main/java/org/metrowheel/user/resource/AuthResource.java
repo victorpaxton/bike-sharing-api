@@ -8,6 +8,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.metrowheel.exception.ApiError;
 import org.metrowheel.security.TokenUtils;
 import org.metrowheel.user.model.AuthResponse;
 import org.metrowheel.user.model.LoginRequest;
@@ -40,7 +41,7 @@ public class AuthResource {
         // Verify credentials
         if (!userService.verifyPassword(request.getEmail(), request.getPassword())) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ErrorResponse("Invalid credentials"))
+                    .entity(new ApiError("AUTH_ERROR", "Invalid credentials", Response.Status.UNAUTHORIZED.getStatusCode()))
                     .build();
         }
 
@@ -48,7 +49,7 @@ public class AuthResource {
         Optional<User> userOpt = userService.findByEmail(request.getEmail());
         if (userOpt.isEmpty()) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ErrorResponse("Invalid credentials"))
+                    .entity(new ApiError("AUTH_ERROR", "Invalid credentials", Response.Status.UNAUTHORIZED.getStatusCode()))
                     .build();
         }
 
@@ -100,30 +101,10 @@ public class AuthResource {
             return Response.status(Response.Status.CREATED).entity(response).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse(e.getMessage()))
+                    .entity(new ApiError("REGISTRATION_ERROR", e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
                     .build();
         }
     }
 
-    /**
-     * Error response class for authentication errors
-     */
-    public static class ErrorResponse {
-        private String message;
 
-        public ErrorResponse() {
-        }
-
-        public ErrorResponse(String message) {
-            this.message = message;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
-    }
 }
