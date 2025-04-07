@@ -81,6 +81,7 @@ public class TokenUtils {
         // Parse roles
         Set<String> roles = Stream.of(user.getRoles().split(","))
                 .map(String::trim)
+                .map(String::toUpperCase)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet());
         

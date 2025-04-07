@@ -1,4 +1,4 @@
-package org.metrowheel.user.model;
+package org.metrowheel.auth.model;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;

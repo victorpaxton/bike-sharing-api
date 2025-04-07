@@ -1,4 +1,4 @@
-package org.metrowheel.user.resource;
+package org.metrowheel.auth.controller;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -8,23 +8,23 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.metrowheel.exception.ApiError;
+import org.metrowheel.auth.model.AuthResponse;
+import org.metrowheel.auth.model.LoginRequest;
+import org.metrowheel.auth.model.RegistrationRequest;
+import org.metrowheel.common.model.ApiResponse;
 import org.metrowheel.security.TokenUtils;
-import org.metrowheel.user.model.AuthResponse;
-import org.metrowheel.user.model.LoginRequest;
-import org.metrowheel.user.model.RegistrationRequest;
 import org.metrowheel.user.model.User;
 import org.metrowheel.user.service.UserService;
 
 import java.util.Optional;
 
 /**
- * Resource to handle authentication operations (login, registration, token refresh)
+ * Controller to handle authentication operations (login, registration, token refresh)
  */
 @Path("/api/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class AuthResource {
+public class AuthController {
 
     @Inject
     UserService userService;
@@ -41,7 +41,7 @@ public class AuthResource {
         // Verify credentials
         if (!userService.verifyPassword(request.getEmail(), request.getPassword())) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ApiError("AUTH_ERROR", "Invalid credentials", Response.Status.UNAUTHORIZED.getStatusCode()))
+                    .entity(ApiResponse.error("Invalid credentials"))
                     .build();
         }
 
@@ -49,7 +49,7 @@ public class AuthResource {
         Optional<User> userOpt = userService.findByEmail(request.getEmail());
         if (userOpt.isEmpty()) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ApiError("AUTH_ERROR", "Invalid credentials", Response.Status.UNAUTHORIZED.getStatusCode()))
+                    .entity(ApiResponse.error("Invalid credentials"))
                     .build();
         }
 
@@ -60,7 +60,7 @@ public class AuthResource {
         String refreshToken = tokenUtils.generateRefreshToken(user);
 
         // Create response
-        AuthResponse response = AuthResponse.builder()
+        AuthResponse authResponse = AuthResponse.builder()
                 .userId(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
@@ -70,7 +70,7 @@ public class AuthResource {
                 .roles(user.getRoles())
                 .build();
 
-        return Response.ok(response).build();
+        return Response.ok(ApiResponse.success("Login successful", authResponse)).build();
     }
 
     /**
@@ -88,7 +88,7 @@ public class AuthResource {
             String refreshToken = tokenUtils.generateRefreshToken(user);
 
             // Create response
-            AuthResponse response = AuthResponse.builder()
+            AuthResponse authResponse = AuthResponse.builder()
                     .userId(user.getId())
                     .email(user.getEmail())
                     .fullName(user.getFullName())
@@ -98,13 +98,13 @@ public class AuthResource {
                     .roles(user.getRoles())
                     .build();
 
-            return Response.status(Response.Status.CREATED).entity(response).build();
+            return Response.status(Response.Status.CREATED)
+                    .entity(ApiResponse.success("Registration successful", authResponse))
+                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ApiError("REGISTRATION_ERROR", e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
+                    .entity(ApiResponse.error(e.getMessage()))
                     .build();
         }
     }
-
-
 }

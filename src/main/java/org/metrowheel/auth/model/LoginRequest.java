@@ -1,4 +1,4 @@
-package org.metrowheel.user.model;
+package org.metrowheel.auth.model;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

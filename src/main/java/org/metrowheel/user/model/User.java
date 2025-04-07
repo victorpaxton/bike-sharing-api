@@ -23,7 +23,6 @@ import org.metrowheel.common.model.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class User extends BaseEntity {
 
     @NotBlank(message = "Full name is required")

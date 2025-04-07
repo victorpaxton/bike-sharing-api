@@ -6,8 +6,8 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import org.metrowheel.auth.model.RegistrationRequest;
 import org.metrowheel.user.model.PaymentMethod;
-import org.metrowheel.user.model.RegistrationRequest;
 import org.metrowheel.user.model.User;
 import org.metrowheel.user.model.UserAddress;
 import org.metrowheel.user.repository.UserRepository;
@@ -35,6 +35,16 @@ public class UserService {
      */
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+    
+    /**
+     * Check if a user exists by their ID
+     * 
+     * @param id The user ID to check
+     * @return True if the user exists, false otherwise
+     */
+    public boolean userExists(UUID id) {
+        return userRepository.findByIdOptional(id).isPresent();
     }
 
     /**

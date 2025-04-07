@@ -1,4 +1,4 @@
-package org.metrowheel.user.model;
+package org.metrowheel.auth.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
