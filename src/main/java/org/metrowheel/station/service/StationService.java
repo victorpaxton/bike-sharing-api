@@ -5,7 +5,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import org.jboss.logging.Logger;
-import org.metrowheel.bike.model.Bike;
 import org.metrowheel.bike.model.BikeDTO;
 import org.metrowheel.bike.service.BikeService;
 import org.metrowheel.media.service.MediaService;
@@ -243,9 +242,10 @@ public class StationService {
                 .status(station.getStatus())
                 .build();
         
-        // Map bikes to DTOs if they exist
+        // Map AVAILABLE bikes to DTOs if they exist
         if (station.getBikes() != null && !station.getBikes().isEmpty()) {
             List<BikeDTO> bikeDTOs = station.getBikes().stream()
+                    .filter(bike -> bike.getStatus() == org.metrowheel.bike.model.BikeStatus.AVAILABLE) // Filter for AVAILABLE bikes
                     .map(bikeService::mapToDTO)
                     .collect(Collectors.toList());
             dto.setBikes(bikeDTOs);
