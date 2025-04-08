@@ -4,9 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.metrowheel.user.model.UserDTO;
+import org.metrowheel.reservation.model.ReservationBasicDTO;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -19,8 +20,8 @@ import java.util.UUID;
 public class BikeReviewDTO {
     private UUID id;
     private UUID bikeId;
-    private UUID userId;
-    private UUID reservationId;
+    private UserDTO user;
+    private ReservationBasicDTO reservation;
     private Integer rating;
     private String comment;
     private Instant createdAt;

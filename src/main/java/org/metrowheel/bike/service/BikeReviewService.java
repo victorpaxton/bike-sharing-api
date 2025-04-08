@@ -10,9 +10,11 @@ import org.metrowheel.bike.model.BikeReviewRequest;
 import org.metrowheel.bike.repository.BikeRepository;
 import org.metrowheel.bike.repository.BikeReviewRepository;
 import org.metrowheel.reservation.model.Reservation;
+import org.metrowheel.reservation.model.ReservationBasicDTO;
 import org.metrowheel.reservation.model.ReservationStatus;
 import org.metrowheel.reservation.repository.ReservationRepository;
 import org.metrowheel.user.model.User;
+import org.metrowheel.user.model.UserDTO;
 import org.metrowheel.user.service.UserService;
 
 import java.util.List;
@@ -95,11 +97,31 @@ public class BikeReviewService {
      * Map BikeReview entity to DTO
      */
     private BikeReviewDTO mapToDTO(BikeReview review) {
+        // Map user to UserDTO
+        UserDTO userDTO = UserDTO.builder()
+                .id(review.getUser().getId())
+                .fullName(review.getUser().getFullName())
+                .email(review.getUser().getEmail())
+                .phoneNumber(review.getUser().getPhoneNumber())
+                .roles(review.getUser().getRoles())
+                .subscriptionPlan(review.getUser().getSubscriptionPlan())
+                .build();
+
+        // Map reservation to ReservationBasicDTO
+        ReservationBasicDTO reservationDTO = ReservationBasicDTO.builder()
+                .id(review.getReservation().getId())
+                .reservationTime(review.getReservation().getReservationTime())
+                .startTime(review.getReservation().getStartTime())
+                .endTime(review.getReservation().getEndTime())
+                .durationMinutes(review.getReservation().getDurationMinutes())
+                .status(review.getReservation().getStatus())
+                .build();
+        
         return BikeReviewDTO.builder()
                 .id(review.getId())
                 .bikeId(review.getBike().getId())
-                .userId(review.getUser().getId())
-                .reservationId(review.getReservation().getId())
+                .user(userDTO)
+                .reservation(reservationDTO)
                 .rating(review.getRating())
                 .comment(review.getComment())
                 .createdAt(review.getCreatedAt())
