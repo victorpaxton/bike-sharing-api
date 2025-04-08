@@ -5,6 +5,9 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import org.jboss.logging.Logger;
+import org.metrowheel.bike.model.Bike;
+import org.metrowheel.bike.model.BikeDTO;
+import org.metrowheel.bike.service.BikeService;
 import org.metrowheel.media.service.MediaService;
 import org.metrowheel.station.model.Station;
 import org.metrowheel.station.model.StationCreateRequest;
@@ -33,6 +36,9 @@ public class StationService {
     
     @Inject
     MediaService mediaService;
+    
+    @Inject
+    BikeService bikeService;
 
     /**
      * Search for stations based on the provided criteria
@@ -219,7 +225,8 @@ public class StationService {
      * @return The station DTO
      */
     private StationDTO mapToDTO(Station station) {
-        return StationDTO.builder()
+        // Map station to DTO
+        StationDTO dto = StationDTO.builder()
                 .id(station.getId().toString())
                 .name(station.getName())
                 .address(station.getAddress())
@@ -234,6 +241,16 @@ public class StationService {
                 .capacity(station.getCapacity())
                 .status(station.getStatus())
                 .build();
+        
+        // Map bikes to DTOs if they exist
+        if (station.getBikes() != null && !station.getBikes().isEmpty()) {
+            List<BikeDTO> bikeDTOs = station.getBikes().stream()
+                    .map(bikeService::mapToDTO)
+                    .collect(Collectors.toList());
+            dto.setBikes(bikeDTOs);
+        }
+        
+        return dto;
     }
 
     /**

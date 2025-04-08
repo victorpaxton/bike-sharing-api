@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.metrowheel.bike.model.BikeDTO;
+
+import java.util.List;
 
 /**
  * Data Transfer Object for Station information
@@ -29,4 +32,5 @@ public class StationDTO {
     private Integer capacity;
     private Boolean status;
     private Double distance;
+    private List<BikeDTO> bikes;
 }

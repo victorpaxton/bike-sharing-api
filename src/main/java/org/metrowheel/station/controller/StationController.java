@@ -15,11 +15,15 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.metrowheel.exception.ApiError;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.metrowheel.bike.model.AddBikeToStationRequest;
+import org.metrowheel.bike.model.BikeDTO;
+import org.metrowheel.bike.service.BikeService;
 import org.metrowheel.station.model.StationCreateRequest;
 import org.metrowheel.station.model.StationDTO;
 import org.metrowheel.station.model.StationSearchRequest;
 import org.metrowheel.station.service.StationService;
+import org.metrowheel.common.model.ApiResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,11 +39,16 @@ public class StationController {
     @Inject
     StationService stationService;
 
-    /**
-     * Search for stations based on location and filters
-     */
+    @Inject
+    BikeService bikeService;
+
     @GET
-    public Response searchStations(
+    @PermitAll
+    @Operation(
+            summary = "Search for stations",
+            description = "Search for stations based on various criteria including location, name, and availability"
+    )
+    public ApiResponse<List<StationDTO>> searchStations(
             @QueryParam("latitude") Double latitude,
             @QueryParam("longitude") Double longitude,
             @QueryParam("radius") @jakarta.ws.rs.DefaultValue("500") Integer radius,
@@ -60,63 +69,76 @@ public class StationController {
         request.setSize(size);
         
         List<StationDTO> stations = stationService.searchStations(request);
-        return Response.ok(stations).build();
+        return ApiResponse.success(stations);
     }
 
-    /**
-     * Get a single station by ID
-     */
     @GET
     @Path("/{id}")
-    public Response getStation(@PathParam("id") UUID id) {
+    @PermitAll
+    @Operation(
+            summary = "Get station by ID",
+            description = "Retrieve detailed information about a specific station"
+    )
+    public ApiResponse<StationDTO> getStationById(@PathParam("id") UUID id) {
         StationDTO station = stationService.getStationById(id);
         if (station == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ApiError("STATION_NOT_FOUND", "Station not found", Response.Status.NOT_FOUND.getStatusCode()))
-                    .build();
+            return ApiResponse.error("Station not found");
         }
-        return Response.ok(station).build();
+        return ApiResponse.success(station);
     }
 
-    /**
-     * Create a new station (admin only)
-     */
     @POST
     @RolesAllowed("ADMIN")
-    public Response createStation(@Valid StationCreateRequest stationCreateRequest) {
-        StationDTO created = stationService.createStation(stationCreateRequest);
-        return Response.status(Response.Status.CREATED).entity(created).build();
+    @Operation(
+            summary = "Create a new station",
+            description = "Create a new bike station. Requires admin privileges."
+    )
+    public ApiResponse<StationDTO> createStation(@Valid StationCreateRequest request) {
+        StationDTO station = stationService.createStation(request);
+        return ApiResponse.success("Station created successfully", station);
     }
 
-    /**
-     * Update an existing station (admin only)
-     */
     @PUT
     @Path("/{id}")
     @RolesAllowed("ADMIN")
-    public Response updateStation(@PathParam("id") UUID id, @Valid StationDTO stationDTO) {
-        StationDTO updated = stationService.updateStation(id, stationDTO);
-        if (updated == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ApiError("STATION_NOT_FOUND", "Station not found", Response.Status.NOT_FOUND.getStatusCode()))
-                    .build();
+    @Operation(
+            summary = "Update a station",
+            description = "Update an existing station's information. Requires admin privileges."
+    )
+    public ApiResponse<StationDTO> updateStation(@PathParam("id") UUID id, @Valid StationDTO stationDTO) {
+        StationDTO updatedStation = stationService.updateStation(id, stationDTO);
+        if (updatedStation == null) {
+            return ApiResponse.error("Station not found");
         }
-        return Response.ok(updated).build();
+        return ApiResponse.success("Station updated successfully", updatedStation);
     }
 
-    /**
-     * Delete a station (admin only)
-     */
     @DELETE
     @Path("/{id}")
     @RolesAllowed("ADMIN")
-    public Response deleteStation(@PathParam("id") UUID id) {
+    @Operation(
+            summary = "Delete a station",
+            description = "Delete a station. Requires admin privileges."
+    )
+    public ApiResponse<Void> deleteStation(@PathParam("id") UUID id) {
         boolean deleted = stationService.deleteStation(id);
         if (!deleted) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ApiError("STATION_NOT_FOUND", "Station not found", Response.Status.NOT_FOUND.getStatusCode()))
-                    .build();
+            return ApiResponse.error("Station not found");
         }
-        return Response.noContent().build();
+        return ApiResponse.success("Station deleted successfully", null);
+    }
+
+    @POST
+    @Path("/{stationId}/bikes")
+    @RolesAllowed("ADMIN")
+    @Operation(
+            summary = "Add bike to station",
+            description = "Adds an existing bike to a specific station. Requires admin privileges."
+    )
+    public ApiResponse<BikeDTO> addBikeToStation(
+            @PathParam("stationId") String stationId,
+            @Valid AddBikeToStationRequest request) {
+        BikeDTO bike = bikeService.addBikeToStation(stationId, request);
+        return ApiResponse.success("Bike added to station successfully", bike);
     }
 }
