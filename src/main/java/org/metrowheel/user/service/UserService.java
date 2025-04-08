@@ -74,34 +74,10 @@ public class UserService {
                 .password(hashPassword(request.getPassword()))
                 .fullName(request.getFullName())
                 .phoneNumber(request.getPhoneNumber())
-                .termsAccepted(request.isTermsAccepted())
                 .roles("user")
+                .emailVerified(false) // Default to not verified
+                .termsAccepted(true) // Implicitly accepted if they register
                 .build();
-
-        // Create address if provided
-        if (request.getAddress() != null) {
-            UserAddress address = UserAddress.builder()
-                    .streetAddress(request.getAddress().getStreetAddress())
-                    .city(request.getAddress().getCity())
-                    .state(request.getAddress().getState())
-                    .zipCode(request.getAddress().getZipCode())
-                    .country(request.getAddress().getCountry())
-                    .build();
-            address.setUser(user);
-            user.setAddress(address);
-        }
-
-        // Create payment method if provided
-        if (request.getPaymentMethod() != null) {
-            PaymentMethod paymentMethod = PaymentMethod.builder()
-                    .cardNumber(request.getPaymentMethod().getCardNumber())
-                    .cardholderName(request.getPaymentMethod().getCardholderName())
-                    .expiryDate(request.getPaymentMethod().getExpiryDate())
-                    .cvv(request.getPaymentMethod().getCvv())
-                    .build();
-            paymentMethod.setUser(user);
-            user.setPaymentMethod(paymentMethod);
-        }
 
         // Save user
         userRepository.persist(user);
