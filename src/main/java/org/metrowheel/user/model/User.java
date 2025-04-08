@@ -3,6 +3,8 @@ package org.metrowheel.user.model;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
@@ -46,6 +48,11 @@ public class User extends BaseEntity {
 
     @Column(name = "roles", length = 100)
     private String roles;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "subscription_plan", nullable = false)
+    @Builder.Default
+    private SubscriptionPlan subscriptionPlan = SubscriptionPlan.STANDARD;
 
     @Column(name = "email_verified")
     @Builder.Default

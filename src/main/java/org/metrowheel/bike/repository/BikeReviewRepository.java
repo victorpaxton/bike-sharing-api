@@ -5,8 +5,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.metrowheel.bike.model.Bike;
 import org.metrowheel.bike.model.BikeReview;
 import org.metrowheel.user.model.User;
+import org.metrowheel.reservation.model.Reservation;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -46,36 +48,20 @@ public class BikeReviewRepository implements PanacheRepository<BikeReview> {
     }
     
     /**
-     * Check if a user has already reviewed a specific trip
-     * 
-     * @param tripId The bike history/trip ID
-     * @param userId The user ID
-     * @return true if a review exists
+     * Find review by reservation
      */
-    public boolean existsByTripAndUser(UUID tripId, UUID userId) {
-        return count("trip.id = ?1 and user.id = ?2", tripId, userId) > 0;
+    public Optional<BikeReview> findByReservation(Reservation reservation) {
+        return find("reservation", reservation).firstResultOptional();
     }
-    
+
     /**
-     * Calculate average rating for a bike
-     * 
-     * @param bikeId The bike ID
-     * @return The average rating
+     * Get average rating for a bike
      */
-    public Double calculateAverageRating(UUID bikeId) {
-        return getEntityManager()
-                .createQuery("SELECT AVG(r.rating) FROM BikeReview r WHERE r.bike.id = :bikeId", Double.class)
-                .setParameter("bikeId", bikeId)
-                .getSingleResult();
-    }
-    
-    /**
-     * Count total number of ratings for a bike
-     * 
-     * @param bikeId The bike ID
-     * @return Count of ratings
-     */
-    public Long countRatingsByBike(UUID bikeId) {
-        return count("bike.id", bikeId);
+    public double getAverageRatingForBike(UUID bikeId) {
+        return find("bike.id", bikeId)
+                .stream()
+                .mapToInt(BikeReview::getRating)
+                .average()
+                .orElse(0.0);
     }
 }

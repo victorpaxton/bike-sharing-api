@@ -6,11 +6,15 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.SecurityContext;
 import org.metrowheel.auth.model.RegistrationRequest;
+import org.metrowheel.security.TokenUtils;
 import org.metrowheel.user.model.PaymentMethod;
 import org.metrowheel.user.model.User;
 import org.metrowheel.user.model.UserAddress;
 import org.metrowheel.user.repository.UserRepository;
+import io.quarkus.security.identity.SecurityIdentity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -21,6 +25,12 @@ public class UserService {
 
     @Inject
     UserRepository userRepository;
+    
+    @Inject
+    TokenUtils tokenUtils;
+    
+    @Inject
+    SecurityIdentity securityIdentity;
 
     /**
      * Find a user by their ID
@@ -120,5 +130,29 @@ public class UserService {
      */
     private String hashPassword(String password) {
         return BCrypt.withDefaults().hashToString(12, password.toCharArray());
+    }
+
+    /**
+     * Get the currently authenticated user
+     * 
+     * @return The authenticated user
+     * @throws NotFoundException if the user is not found
+     */
+    public User getCurrentUser() {
+        try {
+            if (securityIdentity == null) {
+                throw new BadRequestException("No authenticated user found");
+            }
+
+            // Get the user ID directly from the security identity attributes
+            String userId = securityIdentity.getAttribute("userId");
+            if (userId == null) {
+                throw new BadRequestException("Invalid security context: missing user ID");
+            }
+            
+            return findById(UUID.fromString(userId));
+        } catch (Exception e) {
+            throw new BadRequestException("Failed to get current user: " + e.getMessage());
+        }
     }
 }

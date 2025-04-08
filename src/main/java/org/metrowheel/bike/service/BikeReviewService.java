@@ -4,18 +4,17 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotFoundException;
-import org.metrowheel.bike.model.Bike;
-import org.metrowheel.bike.model.BikeHistory;
 import org.metrowheel.bike.model.BikeReview;
 import org.metrowheel.bike.model.BikeReviewDTO;
+import org.metrowheel.bike.model.BikeReviewRequest;
 import org.metrowheel.bike.repository.BikeRepository;
-import org.metrowheel.bike.repository.BikeHistoryRepository;
 import org.metrowheel.bike.repository.BikeReviewRepository;
+import org.metrowheel.reservation.model.Reservation;
+import org.metrowheel.reservation.model.ReservationStatus;
+import org.metrowheel.reservation.repository.ReservationRepository;
 import org.metrowheel.user.model.User;
 import org.metrowheel.user.service.UserService;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,141 +26,83 @@ import java.util.stream.Collectors;
 public class BikeReviewService {
 
     @Inject
-    BikeReviewRepository reviewRepository;
+    BikeReviewRepository bikeReviewRepository;
     
     @Inject
     BikeRepository bikeRepository;
     
     @Inject
-    BikeHistoryRepository bikeHistoryRepository;
-    
-    @Inject
     UserService userService;
     
+    @Inject
+    ReservationRepository reservationRepository;
+    
     /**
-     * Create a new review for a bike after a completed trip
-     * 
-     * @param userId The ID of the user creating the review
-     * @param tripId The ID of the completed bike trip/history
-     * @param rating The rating (1-5)
-     * @param reviewText The text review (optional)
-     * @return The created review as DTO
+     * Create a new bike review
      */
     @Transactional
-    public BikeReviewDTO createReview(UUID userId, UUID tripId, Integer rating, String reviewText) {
-        // Validate rating
-        if (rating < 1 || rating > 5) {
-            throw new BadRequestException("Rating must be between 1 and 5");
+    public BikeReviewDTO createReview(BikeReviewRequest request, User user) {
+        // Find and validate the reservation
+        Reservation reservation = reservationRepository.findByIdOptional(request.getReservationId())
+                .orElseThrow(() -> new BadRequestException("Reservation not found"));
+
+        // Validate that the review is for user's own reservation
+        if (!reservation.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("Not authorized to review this reservation");
         }
-        
-        // Get user
-        User user = userService.findById(userId);
-        
-        // Get trip
-        BikeHistory trip = bikeHistoryRepository.findByIdOptional(tripId)
-                .orElseThrow(() -> new NotFoundException("Trip not found with id: " + tripId));
-        
-        // Verify trip belongs to user
-        if (!trip.getUser().getId().equals(userId)) {
-            throw new BadRequestException("You can only review your own trips");
+
+        // Validate that the reservation is completed
+        if (reservation.getStatus() != ReservationStatus.COMPLETED) {
+            throw new BadRequestException("Can only review completed reservations");
         }
-        
-        // Verify trip is completed
-        if (trip.getStatus() != BikeHistory.TripStatus.COMPLETED) {
-            throw new BadRequestException("You can only review completed trips");
+
+        // Check if review already exists for this reservation
+        if (bikeReviewRepository.findByReservation(reservation).isPresent()) {
+            throw new BadRequestException("Review already exists for this reservation");
         }
-        
-        // Check if user already reviewed this trip
-        if (reviewRepository.existsByTripAndUser(tripId, userId)) {
-            throw new BadRequestException("You have already reviewed this trip");
-        }
-        
-        // Create review
+
+        // Create and save the review
         BikeReview review = BikeReview.builder()
-                .bike(trip.getBike())
+                .bike(reservation.getBike())
                 .user(user)
-                .trip(trip)
-                .rating(rating)
-                .reviewText(reviewText)
-                .reviewDate(LocalDateTime.now())
-                .isVerifiedRide(true)
+                .reservation(reservation)
+                .rating(request.getRating())
+                .comment(request.getComment())
                 .build();
-        
-        reviewRepository.persist(review);
-        
-        // Update bike's average rating and total ratings
-        updateBikeRating(trip.getBike().getId());
-        
+
+        bikeReviewRepository.persist(review);
+
         return mapToDTO(review);
     }
     
     /**
-     * Update a bike's average rating and total ratings count
-     * 
-     * @param bikeId The bike ID
-     */
-    @Transactional
-    public void updateBikeRating(UUID bikeId) {
-        Double averageRating = reviewRepository.calculateAverageRating(bikeId);
-        Long totalRatings = reviewRepository.countRatingsByBike(bikeId);
-        
-        Bike bike = bikeRepository.findByIdOptional(bikeId)
-                .orElseThrow(() -> new NotFoundException("Bike not found with id: " + bikeId));
-        
-        bike.setAverageRating(averageRating);
-        bike.setTotalRatings(totalRatings.intValue());
-        
-        bikeRepository.persist(bike);
-    }
-    
-    /**
      * Get reviews for a specific bike
-     * 
-     * @param bikeId The bike ID
-     * @return List of reviews
      */
-    public List<BikeReviewDTO> getReviewsForBike(UUID bikeId) {
-        // Verify bike exists
-        if (!bikeRepository.findByIdOptional(bikeId).isPresent()) {
-            throw new NotFoundException("Bike not found with id: " + bikeId);
-        }
-        
-        return reviewRepository.findByBikeId(bikeId).stream()
+    public List<BikeReviewDTO> getBikeReviews(UUID bikeId) {
+        return bikeReviewRepository.findByBikeId(bikeId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
     
     /**
-     * Get reviews by a specific user
-     * 
-     * @param userId The user ID
-     * @return List of reviews
+     * Get average rating for a bike
      */
-    public List<BikeReviewDTO> getReviewsByUser(UUID userId) {
-        User user = userService.findById(userId);
-        
-        return reviewRepository.findByUser(user).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    public double getBikeAverageRating(UUID bikeId) {
+        return bikeReviewRepository.getAverageRatingForBike(bikeId);
     }
     
     /**
-     * Map BikeReview entity to BikeReviewDTO
-     * 
-     * @param review The review entity
-     * @return The review DTO
+     * Map BikeReview entity to DTO
      */
     private BikeReviewDTO mapToDTO(BikeReview review) {
         return BikeReviewDTO.builder()
                 .id(review.getId())
                 .bikeId(review.getBike().getId())
-                .bikeNumber(review.getBike().getBikeNumber())
                 .userId(review.getUser().getId())
-                .userName(review.getUser().getFullName())
+                .reservationId(review.getReservation().getId())
                 .rating(review.getRating())
-                .reviewText(review.getReviewText())
-                .reviewDate(review.getReviewDate())
-                .isVerifiedRide(review.getIsVerifiedRide())
+                .comment(review.getComment())
+                .createdAt(review.getCreatedAt())
                 .build();
     }
 }

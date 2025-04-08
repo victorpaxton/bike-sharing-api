@@ -13,6 +13,7 @@ import org.metrowheel.station.model.Station;
 import org.metrowheel.station.model.StationCreateRequest;
 import org.metrowheel.station.model.StationDTO;
 import org.metrowheel.station.model.StationSearchRequest;
+import org.metrowheel.station.model.StationMapDTO;
 import org.metrowheel.station.repository.StationRepository;
 
 import java.io.IOException;
@@ -224,7 +225,7 @@ public class StationService {
      * @param station The station entity
      * @return The station DTO
      */
-    private StationDTO mapToDTO(Station station) {
+    public StationDTO mapToDTO(Station station) {
         // Map station to DTO
         StationDTO dto = StationDTO.builder()
                 .id(station.getId().toString())
@@ -251,6 +252,30 @@ public class StationService {
         }
         
         return dto;
+    }
+
+    /**
+     * Map a Station entity to a StationDTO without including bikes
+     * 
+     * @param station The station entity
+     * @return The station DTO without bikes
+     */
+    public StationDTO mapToDTOWithoutBikes(Station station) {
+        return StationDTO.builder()
+                .id(station.getId().toString())
+                .name(station.getName())
+                .address(station.getAddress())
+                .latitude(station.getLatitude())
+                .longitude(station.getLongitude())
+                .city(station.getCity())
+                .district(station.getDistrict())
+                .ward(station.getWard())
+                .imageUrl(station.getImageUrl())
+                .availableStandardBikes(station.getAvailableStandardBikes())
+                .availableElectricBikes(station.getAvailableElectricBikes())
+                .capacity(station.getCapacity())
+                .status(station.getStatus())
+                .build();
     }
 
     /**
@@ -297,5 +322,28 @@ public class StationService {
         
         // Convert to meters
         return R * c * 1000;
+    }
+
+    /**
+     * Get all stations with minimal information for map display
+     * @return List of stations with minimal information
+     */
+    public List<StationMapDTO> getAllStationsForMap() {
+        List<Station> stations = stationRepository.listAll();
+        return stations.stream()
+                .map(station -> {
+                    StationMapDTO dto = new StationMapDTO();
+                    dto.setId(station.getId());
+                    dto.setName(station.getName());
+                    dto.setAddress(station.getAddress());
+                    dto.setLatitude(station.getLatitude());
+                    dto.setLongitude(station.getLongitude());
+                    dto.setAvailableStandardBikes(station.getAvailableStandardBikes());
+                    dto.setAvailableElectricBikes(station.getAvailableElectricBikes());
+                    dto.setCapacity(station.getCapacity());
+                    dto.setStatus(station.getStatus());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

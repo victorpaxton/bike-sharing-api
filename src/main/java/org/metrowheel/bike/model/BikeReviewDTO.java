@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,11 +19,9 @@ import java.util.UUID;
 public class BikeReviewDTO {
     private UUID id;
     private UUID bikeId;
-    private String bikeNumber;
     private UUID userId;
-    private String userName;
+    private UUID reservationId;
     private Integer rating;
-    private String reviewText;
-    private LocalDateTime reviewDate;
-    private Boolean isVerifiedRide;
+    private String comment;
+    private Instant createdAt;
 }

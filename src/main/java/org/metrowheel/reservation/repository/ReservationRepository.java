@@ -8,7 +8,6 @@ import org.metrowheel.reservation.model.ReservationStatus;
 import org.metrowheel.station.model.Station;
 import org.metrowheel.user.model.User;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,8 +24,8 @@ public class ReservationRepository implements PanacheRepositoryBase<Reservation,
      * @return List of active reservations
      */
     public List<Reservation> findActiveReservationsForUser(User user) {
-        return list("user = ?1 and (status = ?2 or status = ?3)", 
-                user, ReservationStatus.SCHEDULED, ReservationStatus.ACTIVE);
+        return list("user = ?1 and status = ?2", 
+                user, ReservationStatus.ACTIVE);
     }
 
     /**
@@ -36,8 +35,8 @@ public class ReservationRepository implements PanacheRepositoryBase<Reservation,
      * @return The active reservation or null if none found
      */
     public Reservation findActiveReservationForBike(Bike bike) {
-        return find("bike = ?1 and (status = ?2 or status = ?3)", 
-                bike, ReservationStatus.SCHEDULED, ReservationStatus.ACTIVE).firstResult();
+        return find("bike = ?1 and status = ?2", 
+                bike, ReservationStatus.ACTIVE).firstResult();
     }
 
     /**
@@ -48,18 +47,6 @@ public class ReservationRepository implements PanacheRepositoryBase<Reservation,
      */
     public List<Reservation> findReservationsForStation(Station station) {
         return list("startStation = ?1", station);
-    }
-
-    /**
-     * Find scheduled reservations set to start within a time range
-     * 
-     * @param startTime Start of the time range
-     * @param endTime End of the time range
-     * @return List of scheduled reservations
-     */
-    public List<Reservation> findUpcomingReservations(LocalDateTime startTime, LocalDateTime endTime) {
-        return list("status = ?1 and scheduledStartTime >= ?2 and scheduledStartTime <= ?3", 
-                ReservationStatus.SCHEDULED, startTime, endTime);
     }
 
     /**
@@ -81,6 +68,6 @@ public class ReservationRepository implements PanacheRepositoryBase<Reservation,
      */
     public long cancelReservationsForBike(Bike bike) {
         return update("status = ?1 where bike = ?2 and status = ?3", 
-                ReservationStatus.CANCELLED, bike, ReservationStatus.SCHEDULED);
+                ReservationStatus.CANCELLED, bike, ReservationStatus.ACTIVE);
     }
 }

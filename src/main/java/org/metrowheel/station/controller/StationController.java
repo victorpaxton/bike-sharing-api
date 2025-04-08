@@ -16,6 +16,9 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityScheme;
 import org.metrowheel.bike.model.AddBikeToStationRequest;
 import org.metrowheel.bike.model.BikeDTO;
 import org.metrowheel.bike.service.BikeService;
@@ -24,6 +27,7 @@ import org.metrowheel.station.model.StationDTO;
 import org.metrowheel.station.model.StationSearchRequest;
 import org.metrowheel.station.service.StationService;
 import org.metrowheel.common.model.ApiResponse;
+import org.metrowheel.station.model.StationMapDTO;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +38,12 @@ import java.util.UUID;
 @Path("/api/stations")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@SecurityScheme(
+    securitySchemeName = "jwt",
+    type = SecuritySchemeType.HTTP,
+    scheme = "bearer",
+    bearerFormat = "JWT"
+)
 public class StationController {
 
     @Inject
@@ -48,6 +58,7 @@ public class StationController {
             summary = "Search for stations",
             description = "Search for stations based on various criteria including location, name, and availability"
     )
+    @SecurityRequirement(name = "jwt")
     public ApiResponse<List<StationDTO>> searchStations(
             @QueryParam("latitude") Double latitude,
             @QueryParam("longitude") Double longitude,
@@ -79,6 +90,7 @@ public class StationController {
             summary = "Get station by ID",
             description = "Retrieve detailed information about a specific station"
     )
+    @SecurityRequirement(name = "jwt")
     public ApiResponse<StationDTO> getStationById(@PathParam("id") UUID id) {
         StationDTO station = stationService.getStationById(id);
         if (station == null) {
@@ -93,6 +105,7 @@ public class StationController {
             summary = "Create a new station",
             description = "Create a new bike station. Requires admin privileges."
     )
+    @SecurityRequirement(name = "jwt")
     public ApiResponse<StationDTO> createStation(@Valid StationCreateRequest request) {
         StationDTO station = stationService.createStation(request);
         return ApiResponse.success("Station created successfully", station);
@@ -105,6 +118,7 @@ public class StationController {
             summary = "Update a station",
             description = "Update an existing station's information. Requires admin privileges."
     )
+    @SecurityRequirement(name = "jwt")
     public ApiResponse<StationDTO> updateStation(@PathParam("id") UUID id, @Valid StationDTO stationDTO) {
         StationDTO updatedStation = stationService.updateStation(id, stationDTO);
         if (updatedStation == null) {
@@ -120,6 +134,7 @@ public class StationController {
             summary = "Delete a station",
             description = "Delete a station. Requires admin privileges."
     )
+    @SecurityRequirement(name = "jwt")
     public ApiResponse<Void> deleteStation(@PathParam("id") UUID id) {
         boolean deleted = stationService.deleteStation(id);
         if (!deleted) {
@@ -135,10 +150,24 @@ public class StationController {
             summary = "Add bike to station",
             description = "Adds an existing bike to a specific station. Requires admin privileges."
     )
+    @SecurityRequirement(name = "jwt")
     public ApiResponse<BikeDTO> addBikeToStation(
             @PathParam("stationId") String stationId,
             @Valid AddBikeToStationRequest request) {
         BikeDTO bike = bikeService.addBikeToStation(stationId, request);
         return ApiResponse.success("Bike added to station successfully", bike);
+    }
+
+    @GET
+    @Path("/map")
+    @PermitAll
+    @Operation(
+            summary = "Get all stations for map display",
+            description = "Retrieve minimal information about all stations for displaying on a map"
+    )
+    @SecurityRequirement(name = "jwt")
+    public ApiResponse<List<StationMapDTO>> getAllStationsForMap() {
+        List<StationMapDTO> stations = stationService.getAllStationsForMap();
+        return ApiResponse.success(stations);
     }
 }
