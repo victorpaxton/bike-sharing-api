@@ -9,6 +9,7 @@ public class StationMapDTO {
     private UUID id;
     private String name;
     private String address;
+    private String imageUrl;
     private double latitude;
     private double longitude;
     private int availableStandardBikes;
@@ -51,6 +52,14 @@ public class StationMapDTO {
 
     public double getLongitude() {
         return longitude;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public void setLongitude(double longitude) {

@@ -342,6 +342,7 @@ public class StationService {
                     dto.setAvailableElectricBikes(station.getAvailableElectricBikes());
                     dto.setCapacity(station.getCapacity());
                     dto.setStatus(station.getStatus());
+                    dto.setImageUrl(station.getImageUrl());
                     return dto;
                 })
                 .collect(Collectors.toList());
