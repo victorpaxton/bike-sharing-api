@@ -64,8 +64,8 @@ public class StationController {
             @QueryParam("longitude") Double longitude,
             @QueryParam("radius") @jakarta.ws.rs.DefaultValue("500") Integer radius,
             @QueryParam("name") String nameFilter,
-            @QueryParam("availableBikes") @jakarta.ws.rs.DefaultValue("false") Boolean onlyWithAvailableBikes,
-            @QueryParam("availableDocks") @jakarta.ws.rs.DefaultValue("false") Boolean onlyWithAvailableDocks,
+//            @QueryParam("availableBikes") @jakarta.ws.rs.DefaultValue("false") Boolean onlyWithAvailableBikes,
+//            @QueryParam("availableDocks") @jakarta.ws.rs.DefaultValue("false") Boolean onlyWithAvailableDocks,
             @QueryParam("page") @jakarta.ws.rs.DefaultValue("0") Integer page,
             @QueryParam("size") @jakarta.ws.rs.DefaultValue("20") Integer size) {
         
@@ -74,8 +74,8 @@ public class StationController {
         request.setLongitude(longitude);
         request.setRadius(radius);
         request.setNameFilter(nameFilter);
-        request.setOnlyWithAvailableBikes(onlyWithAvailableBikes);
-        request.setOnlyWithAvailableDocks(onlyWithAvailableDocks);
+//        request.setOnlyWithAvailableBikes(onlyWithAvailableBikes);
+//        request.setOnlyWithAvailableDocks(onlyWithAvailableDocks);
         request.setPage(page);
         request.setSize(size);
         

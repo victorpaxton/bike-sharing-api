@@ -65,18 +65,18 @@ public class StationService {
             stations = stationRepository.findActiveStations();
         }
         
-        // Apply additional filters
-        if (request.getOnlyWithAvailableBikes()) {
-            stations = stations.stream()
-                    .filter(s -> s.getAvailableStandardBikes() > 0 || s.getAvailableElectricBikes() > 0)
-                    .collect(Collectors.toList());
-        }
-        
-        if (request.getOnlyWithAvailableDocks()) {
-            stations = stations.stream()
-                    .filter(s -> (s.getCapacity() - s.getAvailableStandardBikes() - s.getAvailableElectricBikes()) > 0)
-                    .collect(Collectors.toList());
-        }
+//        // Apply additional filters
+//        if (request.getOnlyWithAvailableBikes()) {
+//            stations = stations.stream()
+//                    .filter(s -> s.getAvailableStandardBikes() > 0 || s.getAvailableElectricBikes() > 0)
+//                    .collect(Collectors.toList());
+//        }
+//
+//        if (request.getOnlyWithAvailableDocks()) {
+//            stations = stations.stream()
+//                    .filter(s -> (s.getCapacity() - s.getAvailableStandardBikes() - s.getAvailableElectricBikes()) > 0)
+//                    .collect(Collectors.toList());
+//        }
         
         // Calculate distances and create DTOs
         List<StationDTO> stationDTOs = new ArrayList<>();
