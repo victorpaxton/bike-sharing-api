@@ -254,7 +254,7 @@ public class StationService {
         station.setAvailableStandardBikes(dto.getAvailableStandardBikes());
         station.setAvailableElectricBikes(dto.getAvailableElectricBikes());
         station.setCapacity(dto.getCapacity());
-        station.setActive(dto.getStatus() != null ? dto.getStatus() : true);
+        station.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
     }
 
     /**
