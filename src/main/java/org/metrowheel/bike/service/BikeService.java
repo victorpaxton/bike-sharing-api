@@ -16,7 +16,9 @@ import org.metrowheel.station.model.StationDTO;
 import org.metrowheel.station.repository.StationRepository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service for bike-related operations.
@@ -29,6 +31,17 @@ public class BikeService {
     
     @Inject
     StationRepository stationRepository;
+
+    /**
+     * Get all bikes in the system
+     * 
+     * @return List of all bikes as DTOs
+     */
+    public List<BikeDTO> getAllBikes() {
+        return bikeRepository.listAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
 
     /**
      * Add a bike to a station. If the bike doesn't exist, it will be created.
