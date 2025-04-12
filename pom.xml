@@ -97,6 +97,12 @@
             <version>0.10.2</version>
         </dependency>
         
+        <!-- Cache -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-cache</artifactId>
+        </dependency>
+        
         <!-- JWT Token handling -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

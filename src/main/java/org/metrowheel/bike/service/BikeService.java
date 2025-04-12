@@ -1,5 +1,6 @@
 package org.metrowheel.bike.service;
 
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -146,5 +147,19 @@ public class BikeService {
                 .totalRatings(bike.getTotalRatings())
                 .currentStation(stationDTO)
                 .build();
+    }
+
+    @CacheResult(cacheName = "bike-by-id")
+    public BikeDTO getBikeById(UUID id) {
+        return bikeRepository.findByIdOptional(id)
+                .map(this::mapToDTO)
+                .orElse(null);
+    }
+
+    @CacheResult(cacheName = "available-bikes")
+    public List<BikeDTO> getAvailableBikes() {
+        return bikeRepository.findAvailableBikes().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 } 

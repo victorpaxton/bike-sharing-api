@@ -14,7 +14,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
@@ -28,6 +27,7 @@ import org.metrowheel.station.model.StationSearchRequest;
 import org.metrowheel.station.service.StationService;
 import org.metrowheel.common.model.ApiResponse;
 import org.metrowheel.station.model.StationMapDTO;
+import org.metrowheel.station.service.StationMapCacheService;
 
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +51,9 @@ public class StationController {
 
     @Inject
     BikeService bikeService;
+
+    @Inject
+    StationMapCacheService stationMapCacheService;
 
     @GET
     @PermitAll
@@ -169,5 +172,32 @@ public class StationController {
     public ApiResponse<List<StationMapDTO>> getAllStationsForMap() {
         List<StationMapDTO> stations = stationService.getAllStationsForMap();
         return ApiResponse.success(stations);
+    }
+
+    @GET
+    @Path("/map/cache")
+    @PermitAll
+    @Operation(
+            summary = "Get cached map data",
+            description = "Retrieve cached station data for map display. Returns empty if no cached data exists."
+    )
+    @SecurityRequirement(name = "jwt")
+    public ApiResponse<List<StationMapDTO>> getCachedMapData() {
+        return stationMapCacheService.getCachedDataIfExists()
+                .map(ApiResponse::success)
+                .orElse(ApiResponse.success(List.of()));
+    }
+
+    @POST
+    @Path("/map/cache/invalidate")
+    @RolesAllowed("ADMIN")
+    @Operation(
+            summary = "Invalidate map cache",
+            description = "Manually invalidate the station map cache. Requires admin privileges."
+    )
+    @SecurityRequirement(name = "jwt")
+    public ApiResponse<Void> invalidateMapCache() {
+        stationMapCacheService.invalidateCache();
+        return ApiResponse.success(null);
     }
 }

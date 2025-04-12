@@ -1,5 +1,6 @@
 package org.metrowheel.station.service;
 
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -14,6 +15,7 @@ import org.metrowheel.station.model.StationDTO;
 import org.metrowheel.station.model.StationSearchRequest;
 import org.metrowheel.station.model.StationMapDTO;
 import org.metrowheel.station.repository.StationRepository;
+import org.metrowheel.station.service.StationMapCacheService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +41,9 @@ public class StationService {
     
     @Inject
     BikeService bikeService;
+
+    @Inject
+    StationMapCacheService stationMapCacheService;
 
     /**
      * Search for stations based on the provided criteria
@@ -170,6 +175,7 @@ public class StationService {
         }
         
         stationRepository.persist(station);
+        stationMapCacheService.invalidateCache();
         return mapToDTO(station);
     }
 
@@ -185,6 +191,7 @@ public class StationService {
         updateStationFromDTO(station, stationDTO);
         
         stationRepository.persist(station);
+        stationMapCacheService.invalidateCache();
         return mapToDTO(station);
     }
 
@@ -204,6 +211,7 @@ public class StationService {
         
         updateStationFromDTO(station, stationDTO);
         stationRepository.persist(station);
+        stationMapCacheService.invalidateCache();
         return mapToDTO(station);
     }
 
@@ -215,7 +223,11 @@ public class StationService {
      */
     @Transactional
     public boolean deleteStation(UUID id) {
-        return stationRepository.deleteById(id);
+        boolean deleted = stationRepository.deleteById(id);
+        if (deleted) {
+            stationMapCacheService.invalidateCache();
+        }
+        return deleted;
     }
 
     /**
@@ -329,22 +341,6 @@ public class StationService {
      * @return List of stations with minimal information
      */
     public List<StationMapDTO> getAllStationsForMap() {
-        List<Station> stations = stationRepository.listAll();
-        return stations.stream()
-                .map(station -> {
-                    StationMapDTO dto = new StationMapDTO();
-                    dto.setId(station.getId());
-                    dto.setName(station.getName());
-                    dto.setAddress(station.getAddress());
-                    dto.setLatitude(station.getLatitude());
-                    dto.setLongitude(station.getLongitude());
-                    dto.setAvailableStandardBikes(station.getAvailableStandardBikes());
-                    dto.setAvailableElectricBikes(station.getAvailableElectricBikes());
-                    dto.setCapacity(station.getCapacity());
-                    dto.setStatus(station.getStatus());
-                    dto.setImageUrl(station.getImageUrl());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        return stationMapCacheService.getCachedStations();
     }
 }

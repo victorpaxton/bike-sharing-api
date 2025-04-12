@@ -15,6 +15,7 @@ import org.metrowheel.user.model.User;
 import org.metrowheel.user.model.UserAddress;
 import org.metrowheel.user.repository.UserRepository;
 import io.quarkus.security.identity.SecurityIdentity;
+import io.quarkus.cache.CacheResult;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -35,6 +36,7 @@ public class UserService {
     /**
      * Find a user by their ID
      */
+    @CacheResult(cacheName = "user-by-id")
     public User findById(UUID id) {
         return userRepository.findByIdOptional(id)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
@@ -43,6 +45,7 @@ public class UserService {
     /**
      * Find a user by their email
      */
+    @CacheResult(cacheName = "user-by-email")
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
